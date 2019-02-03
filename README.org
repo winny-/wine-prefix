@@ -17,7 +17,7 @@ wine-prefix help                      # Get help info.
 *** From Git
 
 #+BEGIN_SRC sh
-git clone git@github.com:winny-/wine-prefix
+git clone git@github.com:winny-/wine-prefix.git
 cd wine-prefix
 raco pkg install --auto --link
 #+END_SRC
