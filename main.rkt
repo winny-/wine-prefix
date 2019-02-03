@@ -1,6 +1,9 @@
 #lang racket/base
 
-(require racket/match
+(require racket/function
+         racket/list
+         racket/match
+         racket/pretty
          racket/promise
          racket/string
          racket/unit)
@@ -31,6 +34,17 @@
   (for/first ([p (wine-prefix-settings-profiles (wine-prefix-get-config))]
               #:when (string-ci=? (wine-prefix-profile-name p) name))
     p))
+
+(define (wine-prefix-backup-config)
+  (define config-path (path->string (wine-prefix-config-path)))
+  (copy-file config-path (string-append config-path ".backup") #t))
+
+(define (wine-prefix-save-config [cfg (force (wine-prefix-get-config))])
+  (wine-prefix-backup-config)
+  (with-output-to-file
+    (wine-prefix-config-path)
+    (thunk (pretty-write cfg))
+    #:exists 'replace))
 
 ; --------------------------------------------------------------------
 ; helpers
@@ -105,6 +119,9 @@ wine-prefix usage:
                                             prefix
     shell   <profile> [shell]            -- chdir into profile's prefix and
                                             run shell, or $SHELL
+    add profile <profile> <prefix>       -- Add profile with prefix to config
+    add task <profile> <name> <kind> <args ...>  -- Add task to profile,
+                                                    `kind` should be program
 
 EOF
           ))
@@ -119,7 +136,31 @@ EOF
         task)
       (printf "\t~a\t~a\t~a\n" task-name kind payload))))
 
+(define (wine-prefix-add what . args)
+  (match what
+    ["profile" (apply wine-prefix-add-profile args)]
+    ["task" (apply wine-prefix-add-task args)]
+    [a
+     (fprintf (current-error-port) "Invalid object `~a'.\n" a)
+     (wine-prefix-help)
+     (exit 1)]))
 
+(define (wine-prefix-add-profile name prefix)
+  (when (wine-prefix-get-profile name)
+    (fprintf (current-error-port) "Profile with `~a' already exists.\n" name)
+    (exit 1))
+  (wine-prefix-save-config (wine-prefix-settings (append (wine-prefix-settings-profiles (wine-prefix-get-config))
+                                                         (list (wine-prefix-profile name prefix empty))))))
+
+(define (wine-prefix-add-task profile name kind . payload)
+  (define new-task (wine-prefix-task name (string->symbol kind) payload))
+  (wine-prefix-save-config
+   (wine-prefix-settings
+    (for/list ([p (wine-prefix-settings-profiles (wine-prefix-get-config))])
+      (match-define (struct* wine-prefix-profile ([name the-profile-name] [tasks the-tasks])) p)
+      (if (string-ci=? the-profile-name profile)
+          (struct-copy wine-prefix-profile p [tasks (append the-tasks (list new-task))])
+          p)))))
 
 ; --------------------------------------------------------------------
 ; entrypoint
@@ -134,5 +175,6 @@ EOF
       [kill ,wine-prefix-kill]
       [winecfg ,wine-prefix-winecfg]
       [exec ,wine-prefix-exec]
-      [shell ,wine-prefix-shell]))
+      [shell ,wine-prefix-shell]
+      [add ,wine-prefix-add]))
   (command-tree wine-prefix-commands (current-command-line-arguments)))
