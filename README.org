@@ -1,0 +1,50 @@
+* wine-prefix -- simple command line wine prefix manager
+
+** Usage
+
+Install a configuration file to ~~/.config/wine-prefix.rktd~.
+
+#+BEGIN_SRC sh
+wine-prefix kill bnet                 # Kill the wineserver for profile bnet.
+wine-prefix list                      # List the configuration.
+wine-prefix run bnet                  # Run the default command for profile bnet.
+wine-prefix run bnet some-other-task  # Run some-other-task for profile bnet.
+wine-prefix help                      # Get help info.
+#+END_SRC
+
+** Installation
+
+*** From Git
+
+#+BEGIN_SRC sh
+git clone git@github.com:winny-/wine-prefix
+cd wine-prefix
+raco pkg install --auto --link
+#+END_SRC
+
+** Example =wine-prefix.rktd=
+
+#+BEGIN_SRC racket
+#s{wine-prefix-settings
+   (#s{wine-prefix-profile
+       "mania"
+       "/mnt/games/wine-prefixes/wow"
+       (#s{wine-prefix-task
+           "default"
+           program
+           ("/mnt/games/WoW-WotLK-mania/World of Warcraft/WoW.exe")})}
+    #s{wine-prefix-profile
+      "bnet"
+      "/mnt/games/wine-prefixes/bnet2"
+      (#s{wine-prefix-task
+         "default"
+         program
+         ("/mnt/games/wine-prefixes/bnet2/drive_c/Program Files (x86)/Battle.net/Battle.net Launcher.exe")})}
+    #s{wine-prefix-profile
+      "podracers"
+      "/mnt/games/wine-prefixes/podracers"
+      (#s{wine-prefix-task
+         "default"
+         program
+         ("start" "/Unix" "/mnt/games/wine-prefixes/podracers/dosdevices/c:/users/Public/Desktop/Star Wars™ Episode I - Racer™.lnk")})})}
+#+END_SRC
