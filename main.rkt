@@ -63,34 +63,48 @@
 ; verbs
 ; --------------------------------------------------------------------
 
+(define (wine-prefix-exec profile command . args)
+  (match-define (struct* wine-prefix-profile ([prefix prefix])) (wine-prefix-get-profile profile))
+  (with-environment-variables (["WINEPREFIX" prefix])
+    (define the-subprocess (apply simple-subprocess command args))
+    (subprocess-wait the-subprocess)
+    (exit (subprocess-status the-subprocess))))
+
 (define (wine-prefix-run what [task-name "default"])
-  (match-define (struct* wine-prefix-profile ([prefix prefix] [tasks tasks])) (wine-prefix-get-profile what))
+  (match-define (and profile (struct* wine-prefix-profile ([tasks tasks])))
+    (wine-prefix-get-profile what))
   (match-define (struct* wine-prefix-task ([name name] [kind kind] [payload payload]))
     (for/first ([t tasks]
                 #:when (string-ci=? (wine-prefix-task-name t) task-name))
       t))
-  (with-environment-variables (["WINEPREFIX" prefix])
-    (define wine-subprocess (apply simple-subprocess "wine" payload))
-    (subprocess-wait wine-subprocess)
-    (exit (subprocess-status wine-subprocess))))
+  (apply wine-prefix-exec what "wine" payload))
 
-(define (wine-prefix-kill what)
-  (match-define (struct* wine-prefix-profile ([prefix prefix])) (wine-prefix-get-profile what))
-  (with-environment-variables (["WINEPREFIX" prefix])
-    (define wineserver-subprocess (simple-subprocess "wineserver" "-k"))
-    (subprocess-wait wineserver-subprocess)
-    (exit (subprocess-status wineserver-subprocess))))
+(define (wine-prefix-kill profile)
+  (wine-prefix-exec profile "wineserver" "-k"))
 
+(define (wine-prefix-winecfg profile)
+  (wine-prefix-exec profile "winecfg"))
+
+(define (wine-prefix-shell profile [shell (getenv "SHELL")])
+  (match-define (struct* wine-prefix-profile ([prefix prefix])) (wine-prefix-get-profile profile))
+  (parameterize ([current-directory prefix])
+    (wine-prefix-exec profile shell)))
 
 (define (wine-prefix-help)
   (printf #<<EOF
 wine-prefix usage:
 
-    list                      -- list all configured profiles and tasks
-    help                      -- this help message
-    run     <profile> [name]  -- run task in profile's prefix with name, or task named `default'
-    kill    <profile>         -- kill profile's prefix
-    winecfg <profile>         -- Open winecfg in profile's prefix
+    list                                 -- list all configured profiles and
+                                            tasks
+    help                                 -- this help message
+    run     <profile> [name]             -- run task in profile's prefix with
+                                            name, or task named `default'
+    kill    <profile>                    -- kill profile's prefix
+    winecfg <profile>                    -- open winecfg in profile's prefix
+    exec    <profile> <prog> [args ...]  -- run prog with args in profile's
+                                            prefix
+    shell   <profile> [shell]            -- chdir into profile's prefix and
+                                            run shell, or $SHELL
 
 EOF
           ))
@@ -105,12 +119,7 @@ EOF
         task)
       (printf "\t~a\t~a\t~a\n" task-name kind payload))))
 
-(define (wine-prefix-winecfg profile)
-  (match-define (struct* wine-prefix-profile ([prefix prefix])) (wine-prefix-get-profile profile))
-  (with-environment-variables (["WINEPREFIX" prefix])
-    (define winecfg-subprocess (simple-subprocess "winecfg"))
-    (subprocess-wait winecfg-subprocess)
-    (exit (subprocess-status winecfg-subprocess))))
+
 
 ; --------------------------------------------------------------------
 ; entrypoint
@@ -123,5 +132,7 @@ EOF
       [run ,wine-prefix-run]
       [list ,wine-prefix-list]
       [kill ,wine-prefix-kill]
-      [winecfg ,wine-prefix-winecfg]))
+      [winecfg ,wine-prefix-winecfg]
+      [exec ,wine-prefix-exec]
+      [shell ,wine-prefix-shell]))
   (command-tree wine-prefix-commands (current-command-line-arguments)))
