@@ -48,3 +48,7 @@ raco pkg install --auto --link
          program
          ("start" "/Unix" "/mnt/games/wine-prefixes/podracers/dosdevices/c:/users/Public/Desktop/Star Wars™ Episode I - Racer™.lnk")})})}
 #+END_SRC
+
+** License
+
+   MIT. See [[file:LICENSE][LICENSE]].
