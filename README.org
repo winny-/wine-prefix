@@ -2,7 +2,7 @@
 
 ** Usage
 
-Install a configuration file to ~~/.config/wine-prefix.rktd~.
+Install a configuration file to =~/.config/wine-prefix.rktd=.
 
 #+BEGIN_SRC sh
 wine-prefix kill bnet                 # Kill the wineserver for profile bnet.
