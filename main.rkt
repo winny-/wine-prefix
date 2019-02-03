@@ -86,10 +86,11 @@
   (printf #<<EOF
 wine-prefix usage:
 
-    list                   -- list all configured profiles and tasks
-    help                   -- this help message
-    run  <profile> [name]  -- run task in profile's prefix with name, or task named `default'
-    kill <profile>         -- kill profile's prefix
+    list                      -- list all configured profiles and tasks
+    help                      -- this help message
+    run     <profile> [name]  -- run task in profile's prefix with name, or task named `default'
+    kill    <profile>         -- kill profile's prefix
+    winecfg <profile>         -- Open winecfg in profile's prefix
 
 EOF
           ))
@@ -104,6 +105,13 @@ EOF
         task)
       (printf "\t~a\t~a\t~a\n" task-name kind payload))))
 
+(define (wine-prefix-winecfg profile)
+  (match-define (struct* wine-prefix-profile ([prefix prefix])) (wine-prefix-get-profile profile))
+  (with-environment-variables (["WINEPREFIX" prefix])
+    (define winecfg-subprocess (simple-subprocess "winecfg"))
+    (subprocess-wait winecfg-subprocess)
+    (exit (subprocess-status winecfg-subprocess))))
+
 ; --------------------------------------------------------------------
 ; entrypoint
 ; --------------------------------------------------------------------
@@ -114,5 +122,6 @@ EOF
     `([help ,wine-prefix-help]
       [run ,wine-prefix-run]
       [list ,wine-prefix-list]
-      [kill ,wine-prefix-kill]))
+      [kill ,wine-prefix-kill]
+      [winecfg ,wine-prefix-winecfg]))
   (command-tree wine-prefix-commands (current-command-line-arguments)))
