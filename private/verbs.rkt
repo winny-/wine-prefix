@@ -25,12 +25,8 @@
     (exit (subprocess-status the-subprocess))))
 
 (define (wine-prefix-run what [task-name "default"])
-  (match-define (and profile (struct* wine-prefix-profile ([tasks tasks])))
-    (wine-prefix-get-profile what))
   (match-define (struct* wine-prefix-task ([name name] [kind kind] [payload payload]))
-    (for/first ([t tasks]
-                #:when (string-ci=? (wine-prefix-task-name t) task-name))
-      t))
+    (wine-prefix-get-task what task-name))
   (apply wine-prefix-exec what "wine" payload))
 
 (define (wine-prefix-kill profile)

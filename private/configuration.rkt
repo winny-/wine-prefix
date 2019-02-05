@@ -12,6 +12,7 @@
          wine-prefix-read-config
          wine-prefix-get-config
          wine-prefix-get-profile
+         wine-prefix-get-task
          wine-prefix-backup-config
          wine-prefix-save-config)
 
@@ -37,6 +38,12 @@
   (for/first ([p (wine-prefix-settings-profiles (wine-prefix-get-config))]
               #:when (string-ci=? (wine-prefix-profile-name p) name))
     p))
+
+(define (wine-prefix-get-task profile name)
+  (define p (wine-prefix-get-profile profile))
+  (and p (for/first ([t (wine-prefix-profile-tasks p)]
+                     #:when (string-ci=? (wine-prefix-task-name t) name))
+           t)))
 
 (define (wine-prefix-backup-config)
   (define config-path (path->string (wine-prefix-config-path)))
