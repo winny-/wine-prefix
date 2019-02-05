@@ -15,7 +15,8 @@
     [winecfg ,wine-prefix-winecfg]
     [exec ,wine-prefix-exec]
     [shell ,wine-prefix-shell]
-    [add ,wine-prefix-add]))
+    [add ,wine-prefix-add]
+    [remove ,wine-prefix-remove]))
 
 (define (main [arguments (current-command-line-arguments)])
   (command-tree wine-prefix-commands arguments))

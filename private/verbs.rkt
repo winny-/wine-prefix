@@ -15,7 +15,10 @@
          wine-prefix-list
          wine-prefix-add-profile
          wine-prefix-add-task
-         wine-prefix-add)
+         wine-prefix-add
+         wine-prefix-remove
+         wine-prefix-remove-task
+         wine-prefix-remove-profile)
 
 (define (wine-prefix-exec profile command . args)
   (match-define (struct* wine-prefix-profile ([prefix prefix])) (wine-prefix-get-profile profile))
@@ -58,6 +61,8 @@ wine-prefix usage:
     add profile <profile> <prefix>       -- Add profile with prefix to config
     add task <profile> <name> <kind> <args ...>  -- Add task to profile,
                                                     `kind` should be program
+    remove profile <profile>             -- Remove profile.
+    remove task <profile> <task>         -- Remove task on profile.
 
 EOF
           ))
@@ -97,3 +102,35 @@ EOF
       (if (string-ci=? the-profile-name profile)
           (struct-copy wine-prefix-profile p [tasks (append the-tasks (list new-task))])
           p)))))
+
+(define (wine-prefix-remove what . args)
+  (match what
+    ["profile" (apply wine-prefix-remove-profile args)]
+    ["task" (apply wine-prefix-remove-task args)]
+    [a
+     (fprintf (current-error-port) "Invalid object `~a'.\n" a)
+     (wine-prefix-help)
+     (exit 1)]))
+
+(define (wine-prefix-remove-profile name)
+  (unless (wine-prefix-get-profile name)
+    (fprintf (current-error-port) "Profile `~a' does not exist.\n" name)
+    (exit 1))
+  (define config (wine-prefix-get-config))
+  (define new-profiles (filter (λ (p) (not (string-ci=? (wine-prefix-profile-name p) name)))
+                               (wine-prefix-settings-profiles config)))
+  (wine-prefix-save-config (struct-copy wine-prefix-settings config [profiles new-profiles])))
+
+(define (wine-prefix-remove-task profile task)
+  (unless (wine-prefix-get-task profile task)
+    (fprintf (current-error-port "Task `~a' in profile `~a' does not exist.\n" task profile))
+    (exit 1))
+  (define config (wine-prefix-get-config))
+  (define new-profiles
+    (for/list ([p (wine-prefix-settings-profiles config)])
+      (if (string-ci=? (wine-prefix-profile-name p) profile)
+          (struct-copy wine-prefix-profile p [tasks (for/list ([t (wine-prefix-profile-tasks p)]
+                                                               #:unless (string-ci=? (wine-prefix-task-name t) task))
+                                                      t)])
+          p)))
+  (wine-prefix-save-config (struct-copy wine-prefix-settings config [profiles new-profiles])))
