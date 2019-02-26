@@ -10,7 +10,16 @@ wine-prefix list                      # List the configuration.
 wine-prefix run bnet                  # Run the default command for profile bnet.
 wine-prefix run bnet some-other-task  # Run some-other-task for profile bnet.
 wine-prefix help                      # Get help info.
+wine-prefix shell bnet                # Open a shell in the profile's prefix directory.
+wine-prefix exec bnet wineboot        # Run wineboot in profile's prefix.
+wine-prefix winecfg bnet              # Open winecfg in profile's prefix.
+wine-prefix add profile podracers /podracers-prefix
+wine-prefix add task podracers default program podracers.exe
+wine-prefix remove task podracers default
+wine-prefix remove profile podracers
 #+END_SRC
+
+See =wine-prefix help= for more information.
 
 ** Installation
 
