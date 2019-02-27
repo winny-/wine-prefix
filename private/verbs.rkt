@@ -123,7 +123,10 @@ EOF
 
 (define (wine-prefix-remove-task profile task)
   (unless (wine-prefix-get-task profile task)
-    (fprintf (current-error-port "Task `~a' in profile `~a' does not exist.\n" task profile))
+    (define msg (if (wine-prefix-get-profile profile)
+                    (format "Task `~a' in profile `~a' does not exist." task profile)
+                    (format "Profile `~a' does not exist." profile)))
+    (displayln msg (current-error-port))
     (exit 1))
   (define config (wine-prefix-get-config))
   (define new-profiles
