@@ -21,6 +21,12 @@ wine-prefix remove profile podracers
 
 See =wine-prefix help= for more information.
 
+Also, consider making an alias.
+
+#+BEGIN_SRC sh
+alias wp='wine-prefix'
+#+END_SRC
+
 ** Installation
 
 *** From Git
@@ -61,3 +67,10 @@ raco pkg install --auto --link
 ** License
 
    MIT. See [[file:LICENSE][LICENSE]].
+
+** WIP
+
+- Better commmand line syntax & semantics
+- Better error messages
+- Shortcut commands (similar in spirit to ~git checkout -B some-remote-branch~)
+- Report errors when deleting non-existant objects
