@@ -1,7 +1,9 @@
 #lang racket/base
 
-(require racket/list
-         racket/match)
+(require racket/format
+         racket/list
+         racket/match
+         racket/string)
 
 (require "configuration.rkt"
          "helpers.rkt")
@@ -68,14 +70,22 @@ EOF
           ))
 
 (define (wine-prefix-list)
-  (for ([profile (wine-prefix-settings-profiles (wine-prefix-get-config))])
+  (define profiles
+    (sort (wine-prefix-settings-profiles (wine-prefix-get-config))
+          string-ci<?
+          #:key wine-prefix-profile-name
+          #:cache-keys? #t))
+  (for ([profile profiles])
     (match-define (struct* wine-prefix-profile ([name name] [prefix prefix] [tasks tasks]))
       profile)
     (printf "~a (~a)\n" name prefix)
     (for ([task tasks])
       (match-define (struct* wine-prefix-task ([name task-name] [kind kind] [payload payload]))
         task)
-      (printf "\t~a\t~a\t~a\n" task-name kind payload))))
+      (define payload-text (if (list? payload)
+                               (format "(~a)" (string-join (map ~v payload)))
+                               (~v payload)))
+      (printf "\t~a\t~a\t~a\n" task-name kind payload-text))))
 
 (define (wine-prefix-add what . args)
   (match what
