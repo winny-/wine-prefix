@@ -22,8 +22,16 @@
          wine-prefix-remove-task
          wine-prefix-remove-profile)
 
+(define ((no-such-profile what) ignore profile-name)
+  (fprintf (current-error-port) "~a: No such profile ~v\n" what profile-name)
+  (exit 1))
+
+(define ((no-such-task what) ignore profile-name task-name)
+  (fprintf (current-error-port) "~a: No such task ~v\n" what task-name)
+  (exit 1))
+
 (define (wine-prefix-exec profile command . args)
-  (match-define (struct* wine-prefix-profile ([prefix prefix])) (wine-prefix-get-profile profile))
+  (match-define (struct* wine-prefix-profile ([prefix prefix])) (wine-prefix-get-profile profile (no-such-profile 'exec)))
   (with-environment-variables (["WINEPREFIX" prefix])
     (define the-subprocess (apply simple-subprocess command args))
     (subprocess-wait the-subprocess)
@@ -123,21 +131,15 @@ EOF
      (exit 1)]))
 
 (define (wine-prefix-remove-profile name)
-  (unless (wine-prefix-get-profile name)
-    (fprintf (current-error-port) "Profile `~a' does not exist.\n" name)
-    (exit 1))
+  (void (wine-prefix-get-profile name (no-such-profile 'remove)))
   (define config (wine-prefix-get-config))
   (define new-profiles (filter (λ (p) (not (string-ci=? (wine-prefix-profile-name p) name)))
                                (wine-prefix-settings-profiles config)))
   (wine-prefix-save-config (struct-copy wine-prefix-settings config [profiles new-profiles])))
 
 (define (wine-prefix-remove-task profile task)
-  (unless (wine-prefix-get-task profile task)
-    (define msg (if (wine-prefix-get-profile profile)
-                    (format "Task `~a' in profile `~a' does not exist." task profile)
-                    (format "Profile `~a' does not exist." profile)))
-    (displayln msg (current-error-port))
-    (exit 1))
+  (void (wine-prefix-get-profile profile (no-such-profile 'remove)))
+  (void (wine-prefix-get-task profile task (no-such-task 'remove)))
   (define config (wine-prefix-get-config))
   (define new-profiles
     (for/list ([p (wine-prefix-settings-profiles config)])
