@@ -105,7 +105,7 @@ EOF
      (exit 1)]))
 
 (define (wine-prefix-add-profile name prefix)
-  (when (wine-prefix-get-profile name)
+  (when (wine-prefix-get-profile name #f)
     (fprintf (current-error-port) "Profile with `~a' already exists.\n" name)
     (exit 1))
   (wine-prefix-save-config (wine-prefix-settings (append (wine-prefix-settings-profiles (wine-prefix-get-config))
