@@ -49,7 +49,7 @@
   (wine-prefix-exec profile "winecfg"))
 
 (define (wine-prefix-shell profile [shell (getenv "SHELL")])
-  (match-define (struct* wine-prefix-profile ([prefix prefix])) (wine-prefix-get-profile profile))
+  (match-define (struct* wine-prefix-profile ([prefix prefix])) (wine-prefix-get-profile (no-such-profile 'shell)))
   (parameterize ([current-directory prefix])
     (wine-prefix-exec profile shell)))
 
