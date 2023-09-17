@@ -1,3 +1,5 @@
+[[https://unmaintained.tech/badge.svg]]
+
 * wine-prefix -- simple command line wine prefix manager
 
 ** Usage
